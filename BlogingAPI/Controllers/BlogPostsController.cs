@@ -5,6 +5,7 @@ using BlogApp.Data;
 using BlogApp.Models;
 using BlogingAPI.DTO.BlogPostDtos;
 using System.Collections.Generic;
+using BlogingAPI.DTO.CommentsDto;
 
 namespace BlogingAPI.Controllers
 {
@@ -21,21 +22,53 @@ namespace BlogingAPI.Controllers
 
         // GET: api/BlogPosts
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<BlogPostDto>>> GetAllPost()
+        public async Task<ActionResult> GetAllPost()
         {
             try
             {
                 var result = await _context.BlogPosts
-                    .Select(a => new BlogPostDto { Id = a.Id, BlogTitle = a.BlogTitle, BlogContent = a.BlogContent, AuthorId = a.AuthorId,
-                    
-                    })
                     .ToListAsync();
+
+                var listdto = new List<BlogPostDto>();
+                foreach (var item in result)
+                {
+                    var comments= _context.CommentOnPosts.Where(x=>x.BlogPostId == item.Id).ToList();
+
+                    var listcomments = new List<CommentOnPostDto>();
+                    foreach (var comment in comments)
+                    {
+                        listcomments.Add(new CommentOnPostDto()
+                        {
+                            Id = comment.Id,
+                            AuthorId = comment.AuthorId,
+                            Content = comment.Content,
+                            BlogPostId = item.Id
+                        });
+                    }
+
+
+                    //var blog = new BlogPostDto();
+                    //blog.AuthorId = item.AuthorId;
+
+
+
+                    //listdto.Add(blog);
+
+                    listdto.Add(new BlogPostDto()
+                    {
+                        AuthorId = item.AuthorId,
+                        BlogContent = item.BlogContent,
+                        BlogTitle = item.BlogTitle, 
+                        Id = item.Id,
+                        CommentOnPosts = listcomments,
+                    });
+                }
 
                 return Ok(new
                 {
                     Success = true,
                     Message = "Data retrieved successfully.",
-                    Data = result
+                    Data = listdto
                 });
             }
             catch (Exception ex)
@@ -47,7 +80,7 @@ namespace BlogingAPI.Controllers
 
         // GET: api/BlogPosts/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<BlogPostDto>> GetPostById(int id)
+        public async Task<ActionResult> GetPostById(int id)
         {
             try
             {
@@ -80,7 +113,7 @@ namespace BlogingAPI.Controllers
 
         // POST: api/BlogPosts
         [HttpPost]
-        public async Task<ActionResult<BlogPostCreateDto>> CreatePost(BlogPostCreateDto postDto)
+        public async Task<ActionResult> CreatePost(BlogPostCreateDto postDto)
         {
             try
             {
