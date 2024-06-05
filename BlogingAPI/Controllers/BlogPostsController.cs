@@ -26,8 +26,7 @@ namespace BlogingAPI.Controllers
         {
             try
             {
-                var result = await _context.BlogPosts
-                    .ToListAsync();
+                var result = await _context.BlogPosts.ToListAsync();
 
                 var listdto = new List<BlogPostDto>();
                 foreach (var item in result)

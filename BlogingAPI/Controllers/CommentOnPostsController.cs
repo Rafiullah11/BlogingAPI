@@ -1,5 +1,6 @@
 ﻿using BlogApp.Data;
 using BlogApp.Models;
+using BlogingAPI.DTO.BlogPostDtos;
 using BlogingAPI.DTO.CommentsDto;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -22,26 +23,43 @@ namespace BlogingAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<CommentOnPostDto>>> GetAllComment()
+        public async Task<ActionResult> GetAllComment()
         {
             try
             {
-                var allComment = await _blogContext.CommentOnPosts
-                    .Select(c => new CommentOnPostDto
+                var commentPost = await _blogContext.CommentOnPosts.ToListAsync();
+                var commentListDto = new List<CommentOnPostDto>();
+                foreach (var comment in commentPost)
+                {
+                    var blogPosts = _blogContext.BlogPosts.Where(x => x.Id == comment.Id).ToList();
+
+                    var listOfBlogDto = new List<BlogPostDto>();
+                    foreach (var blog in blogPosts)
                     {
-                        Id = c.Id,
-                        Content = c.Content,
-                        AuthorId = c.AuthorId,
-                        BlogPostId = c.BlogPostId,
-                       
-                    })
-                    .ToListAsync();
+                        listOfBlogDto.Add(new BlogPostDto()
+                        {
+                            Id = blog.Id,
+                            AuthorId = blog.AuthorId,
+                            BlogTitle = blog.BlogTitle,
+                            BlogContent = blog.BlogContent
+                        });
+                    }
+
+                    commentListDto.Add(new CommentOnPostDto()
+                    {
+                        AuthorId = comment.AuthorId,
+                        Content = comment.Content,
+                        BlogPostId = comment.BlogPostId,
+                        Id = comment.Id,
+                        BlogPost = listOfBlogDto,
+                    });
+                }
 
                 return Ok(new
                 {
                     Success = true,
                     Message = "Data retrieved successfully.",
-                    Data = allComment
+                    Data = commentListDto
                 });
             }
             catch (Exception ex)
@@ -51,8 +69,11 @@ namespace BlogingAPI.Controllers
             }
         }
 
+
+
+
         [HttpGet("{id}")]
-        public async Task<ActionResult<CommentOnPostDto>> GetCommentById(int id)
+        public async Task<ActionResult> GetCommentById(int id)
         {
             try
             {
