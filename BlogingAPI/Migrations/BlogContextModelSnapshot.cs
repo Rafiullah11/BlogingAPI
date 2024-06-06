@@ -64,11 +64,22 @@ namespace BlogingAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AuthorId");
-
-                    b.HasIndex("BlogPostId");
-
                     b.ToTable("CommentOnPosts");
+                });
+
+            modelBuilder.Entity("BlogPostCommentOnPost", b =>
+                {
+                    b.Property<int>("BlogPostId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CommentOnPostsId")
+                        .HasColumnType("int");
+
+                    b.HasKey("BlogPostId", "CommentOnPostsId");
+
+                    b.HasIndex("CommentOnPostsId");
+
+                    b.ToTable("BlogPostCommentOnPost");
                 });
 
             modelBuilder.Entity("BlogingAPI.Model.Author", b =>
@@ -98,35 +109,24 @@ namespace BlogingAPI.Migrations
                     b.Navigation("Author");
                 });
 
-            modelBuilder.Entity("BlogApp.Models.CommentOnPost", b =>
+            modelBuilder.Entity("BlogPostCommentOnPost", b =>
                 {
-                    b.HasOne("BlogingAPI.Model.Author", "Author")
-                        .WithMany("CommentOnPosts")
-                        .HasForeignKey("AuthorId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("BlogApp.Models.BlogPost", "BlogPost")
-                        .WithMany("CommentOnPosts")
+                    b.HasOne("BlogApp.Models.BlogPost", null)
+                        .WithMany()
                         .HasForeignKey("BlogPostId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Author");
-
-                    b.Navigation("BlogPost");
-                });
-
-            modelBuilder.Entity("BlogApp.Models.BlogPost", b =>
-                {
-                    b.Navigation("CommentOnPosts");
+                    b.HasOne("BlogApp.Models.CommentOnPost", null)
+                        .WithMany()
+                        .HasForeignKey("CommentOnPostsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("BlogingAPI.Model.Author", b =>
                 {
                     b.Navigation("BlogPosts");
-
-                    b.Navigation("CommentOnPosts");
                 });
 #pragma warning restore 612, 618
         }

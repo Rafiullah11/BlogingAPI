@@ -47,7 +47,7 @@ namespace BlogingAPI.Controllers
 
                     commentListDto.Add(new CommentOnPostDto()
                     {
-                        AuthorId = comment.AuthorId,
+                        //AuthorId = comment.AuthorId,
                         Content = comment.Content,
                         BlogPostId = comment.BlogPostId,
                         Id = comment.Id,
@@ -83,7 +83,7 @@ namespace BlogingAPI.Controllers
                     {
                         Id = c.Id,
                         Content = c.Content,
-                        AuthorId = c.AuthorId,
+                        //AuthorId = c.AuthorId,
                         BlogPostId = c.BlogPostId
                     })
                     .FirstOrDefaultAsync();

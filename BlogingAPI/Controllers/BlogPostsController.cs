@@ -6,6 +6,7 @@ using BlogApp.Models;
 using BlogingAPI.DTO.BlogPostDtos;
 using System.Collections.Generic;
 using BlogingAPI.DTO.CommentsDto;
+using BlogingAPI.DTO.AuthorsDtos;
 
 namespace BlogingAPI.Controllers
 {
@@ -20,46 +21,55 @@ namespace BlogingAPI.Controllers
             _context = context;
         }
 
-        // GET: api/BlogPosts
         [HttpGet]
         public async Task<ActionResult> GetAllPost()
         {
             try
             {
-                var result = await _context.BlogPosts.ToListAsync();
+                var posts = await _context.BlogPosts.ToListAsync();
 
                 var listdto = new List<BlogPostDto>();
-                foreach (var item in result)
+                foreach (var post in posts)
                 {
-                    var comments= _context.CommentOnPosts.Where(x=>x.BlogPostId == item.Id).ToList();
+                    // Get the author of the blog post
+                    var author = await _context.Authors.FindAsync(post.AuthorId);
 
-                    var listcomments = new List<CommentOnPostDto>();
+                    // Get the comments for the blog post
+                    var comments = await _context.CommentOnPosts
+                        .Where(c => c.BlogPostId == post.Id)
+                        .ToListAsync();
+
+                    var listcomments = new List<CommentForPostDto>();
                     foreach (var comment in comments)
                     {
-                        listcomments.Add(new CommentOnPostDto()
+                        // Get the author of the comment
+                        //var commentAuthor = await _context.Authors.FindAsync(comment.AuthorId);
+
+                        listcomments.Add(new CommentForPostDto()
                         {
                             Id = comment.Id,
-                            AuthorId = comment.AuthorId,
                             Content = comment.Content,
-                            BlogPostId = item.Id
+                            //BlogPostId = post.Id,
+                            //Author = commentAuthor != null ? new AuthorsDto
+                            //{
+                            //    Id = commentAuthor.Id,
+                            //    Name = commentAuthor.Name
+                            //} : null
                         });
                     }
 
-
-                    //var blog = new BlogPostDto();
-                    //blog.AuthorId = item.AuthorId;
-
-
-
-                    //listdto.Add(blog);
-
                     listdto.Add(new BlogPostDto()
                     {
-                        AuthorId = item.AuthorId,
-                        BlogContent = item.BlogContent,
-                        BlogTitle = item.BlogTitle, 
-                        Id = item.Id,
-                        CommentOnPosts = listcomments,
+                        Id = post.Id,
+                        BlogTitle = post.BlogTitle,
+                        BlogContent = post.BlogContent,
+                        //AuthorId = post.AuthorId,
+                        Author = author != null ? new AuthorsDto
+                        {
+                            Id = author.Id,
+                            Name = author.Name
+                        } : null,
+                        CommentOnPosts = listcomments
                     });
                 }
 
@@ -76,6 +86,9 @@ namespace BlogingAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, new { Success = false, Message = "An error occurred" });
             }
         }
+
+
+
 
         // GET: api/BlogPosts/5
         [HttpGet("{id}")]
@@ -130,7 +143,6 @@ namespace BlogingAPI.Controllers
             }
         }
 
-        // PUT: api/BlogPosts/5
         [HttpPut("{id}")]
         public async Task<IActionResult> PutPost(int id, BlogPostDto postDto)
         {
@@ -139,7 +151,10 @@ namespace BlogingAPI.Controllers
                 return BadRequest(new { Success = false, Message = "ID mismatch" });
             }
 
-            var existingPost = await _context.BlogPosts.FindAsync(id);
+            var existingPost = await _context.BlogPosts
+                .Include(bp => bp.CommentOnPosts)
+                .FirstOrDefaultAsync(bp => bp.Id == id);
+
             if (existingPost == null)
             {
                 return NotFound(new { Success = false, Message = "Post not found" });
@@ -148,6 +163,22 @@ namespace BlogingAPI.Controllers
             existingPost.BlogTitle = postDto.BlogTitle;
             existingPost.BlogContent = postDto.BlogContent;
             existingPost.AuthorId = postDto.AuthorId;
+
+            // Check for null CommentOnPosts and provide a default empty list if necessary
+            var updatedComments = (postDto.CommentOnPosts ?? new List<CommentForPostDto>()).Select(dto => new CommentOnPost
+            {
+                Id = dto.Id,
+                Content = dto.Content,
+                //BlogPostId = dto.BlogPostId,
+               // AuthorId = dto.Author.Id
+            }).ToList();
+
+            // Replace existing comments with the updated ones
+            existingPost.CommentOnPosts.Clear();
+            foreach (var comment in updatedComments)
+            {
+                existingPost.CommentOnPosts.Add(comment);
+            }
 
             try
             {
@@ -173,6 +204,9 @@ namespace BlogingAPI.Controllers
             }
         }
 
+       
+
+
         // DELETE: api/BlogPosts/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeletePost(int id)
@@ -188,7 +222,12 @@ namespace BlogingAPI.Controllers
                 _context.BlogPosts.Remove(deletePost);
                 await _context.SaveChangesAsync();
 
-                return Accepted(new { Success = true, Message = "deleted successfully." });
+                return Ok(new
+                {
+                    Success = true,
+                    Message = $"Post with Id {id} is deleted successfully ",
+
+                });
 
 
             }
@@ -203,10 +242,6 @@ namespace BlogingAPI.Controllers
         {
             return _context.BlogPosts.Any(e => e.Id == id);
         }
-        private string ApiResponse()
-        {
-            var  deleteResponse = new { Success = true, Message = "Data deleted.." };
-            return deleteResponse.Message;
-        }
+       
     }
 }

@@ -9,7 +9,7 @@ namespace BlogApp.Models
         public int Id { get; set; }
         public string? BlogTitle { get; set; }
         public string? BlogContent { get; set; }
-        public List<CommentOnPost> CommentOnPosts { get; }
+        public List<CommentOnPost> CommentOnPosts { get; set; }
 
         // Foreign key to Author
         public int AuthorId { get; set; }

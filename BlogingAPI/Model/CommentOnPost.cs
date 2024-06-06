@@ -15,7 +15,7 @@ namespace BlogApp.Models
         // Foreign key to BlogPost
         public int BlogPostId { get; set; }
         //public BlogPost? BlogPost { get; set; } = new BlogPost();
-        public List<BlogPost> BlogPost { get; }
+        public List<BlogPost>? BlogPost { get; }
         // Foreign key to BlogPost
         public int AuthorId { get; set; }
     }

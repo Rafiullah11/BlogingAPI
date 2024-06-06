@@ -190,7 +190,12 @@ namespace BlogingAPI.Controllers
                     new { Success = false, Message = "An error occurred while deleting the author" });
             }
 
-            return NoContent();
+            return Ok(new
+            {
+                Success = true,
+                Message = $"Author Id {id} deleted successfully ",
+               
+            });
         }
 
 
